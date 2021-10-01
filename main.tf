@@ -28,12 +28,6 @@ resource "aws_acm_certificate" "wildcard_website" {
   domain_name               = var.website-domain-main
   subject_alternative_names = ["*.${var.website-domain-main}"]
   validation_method         = "DNS"
-
-
-  lifecycle {
-    ignore_changes = [tags["Changed"]]
-  }
-
 }
 
 # Validates the ACM wildcard by creating a Route53 record (as `validation_method` is set to `DNS` in the aws_acm_certificate resource)
@@ -84,10 +78,6 @@ resource "aws_s3_bucket" "website_logs" {
 
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
-
-  lifecycle {
-    ignore_changes = [tags["Changed"]]
-  }
 }
 
 # Creates bucket to store the static website
@@ -107,10 +97,6 @@ resource "aws_s3_bucket" "website_root" {
     index_document = "index.html"
     error_document = "404.html"
   }
-
-  lifecycle {
-    ignore_changes = [tags["Changed"]]
-  }
 }
 
 # Creates bucket for the website handling the redirection (if required), e.g. from https://www.example.com to https://example.com
@@ -126,10 +112,6 @@ resource "aws_s3_bucket" "website_redirect" {
 
   website {
     redirect_all_requests_to = "https://${var.website-domain-main}"
-  }
-
-  lifecycle {
-    ignore_changes = [tags["Changed"]]
   }
 }
 
@@ -197,13 +179,6 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
     error_code            = 404
     response_page_path    = "/404.html"
     response_code         = 404
-  }
-
-  lifecycle {
-    ignore_changes = [
-      tags["Changed"],
-      viewer_certificate,
-    ]
   }
 }
 
@@ -299,13 +274,6 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
   viewer_certificate {
     acm_certificate_arn = data.aws_acm_certificate.wildcard_website.arn
     ssl_support_method  = "sni-only"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      tags["Changed"],
-      viewer_certificate,
-    ]
   }
 }
 

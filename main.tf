@@ -99,22 +99,6 @@ resource "aws_s3_bucket" "website_root" {
   }
 }
 
-# Creates bucket for the website handling the redirection (if required), e.g. from https://www.example.com to https://example.com
-resource "aws_s3_bucket" "website_redirect" {
-  bucket        = "${var.website-domain-main}-redirect"
-  acl           = "public-read"
-  force_destroy = true
-
-  logging {
-    target_bucket = aws_s3_bucket.website_logs.bucket
-    target_prefix = "${var.website-domain-main}-redirect/"
-  }
-
-  website {
-    redirect_all_requests_to = "https://${var.website-domain-main}"
-  }
-}
-
 ## CloudFront
 # Creates the CloudFront distribution to serve the static website
 resource "aws_cloudfront_distribution" "website_cdn_root" {
@@ -220,72 +204,4 @@ resource "aws_s3_bucket_policy" "update_website_root_bucket_policy" {
   ]
 }
 POLICY
-}
-
-# Creates the CloudFront distribution to serve the redirection website (if redirection is required)
-resource "aws_cloudfront_distribution" "website_cdn_redirect" {
-  enabled     = true
-  price_class = "PriceClass_All"
-  # Select the correct PriceClass depending on who the CDN is supposed to serve (https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/PriceClass.html)
-  aliases = [var.website-domain-redirect]
-
-  origin {
-    origin_id   = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
-    domain_name = aws_s3_bucket.website_redirect.website_endpoint
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-    }
-  }
-
-  logging_config {
-    bucket = aws_s3_bucket.website_logs.bucket_domain_name
-    prefix = "${var.website-domain-redirect}/"
-  }
-
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "origin-bucket-${aws_s3_bucket.website_redirect.id}"
-    min_ttl          = "0"
-    default_ttl      = "300"
-    max_ttl          = "1200"
-
-    viewer_protocol_policy = "redirect-to-https" # Redirects any HTTP request to HTTPS
-    compress               = true
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    acm_certificate_arn = data.aws_acm_certificate.wildcard_website.arn
-    ssl_support_method  = "sni-only"
-  }
-}
-
-# Creates the DNS record to point on the CloudFront distribution ID that handles the redirection website
-resource "aws_route53_record" "website_cdn_redirect_record" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = var.website-domain-redirect
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.website_cdn_redirect.domain_name
-    zone_id                = aws_cloudfront_distribution.website_cdn_redirect.hosted_zone_id
-    evaluate_target_health = false
-  }
 }

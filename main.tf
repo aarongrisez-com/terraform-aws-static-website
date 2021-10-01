@@ -29,10 +29,6 @@ resource "aws_acm_certificate" "wildcard_website" {
   subject_alternative_names = ["*.${var.website-domain-main}"]
   validation_method         = "DNS"
 
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
 
   lifecycle {
     ignore_changes = [tags["Changed"]]
@@ -89,12 +85,6 @@ resource "aws_s3_bucket" "website_logs" {
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true
 
-
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
-
   lifecycle {
     ignore_changes = [tags["Changed"]]
   }
@@ -118,11 +108,6 @@ resource "aws_s3_bucket" "website_root" {
     error_document = "404.html"
   }
 
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
-
   lifecycle {
     ignore_changes = [tags["Changed"]]
   }
@@ -142,11 +127,6 @@ resource "aws_s3_bucket" "website_redirect" {
   website {
     redirect_all_requests_to = "https://${var.website-domain-main}"
   }
-
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
 
   lifecycle {
     ignore_changes = [tags["Changed"]]
@@ -218,11 +198,6 @@ resource "aws_cloudfront_distribution" "website_cdn_root" {
     response_page_path    = "/404.html"
     response_code         = 404
   }
-
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
 
   lifecycle {
     ignore_changes = [
@@ -325,11 +300,6 @@ resource "aws_cloudfront_distribution" "website_cdn_redirect" {
     acm_certificate_arn = data.aws_acm_certificate.wildcard_website.arn
     ssl_support_method  = "sni-only"
   }
-
-  tags = merge(var.tags, {
-    ManagedBy = "terraform"
-    Changed   = formatdate("YYYY-MM-DD hh:mm ZZZ", timestamp())
-  })
 
   lifecycle {
     ignore_changes = [

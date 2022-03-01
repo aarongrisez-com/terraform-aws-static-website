@@ -74,7 +74,6 @@ data "aws_acm_certificate" "wildcard_website" {
 # Creates bucket to store logs
 resource "aws_s3_bucket" "website_logs" {
   bucket = "${var.website-domain-main}-logs"
-  acl    = "log-delivery-write"
 
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if this one is not empty
   force_destroy = true

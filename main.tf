@@ -82,20 +82,9 @@ resource "aws_s3_bucket" "website_logs" {
 # Creates bucket to store the static website
 resource "aws_s3_bucket" "website_root" {
   bucket = "${var.website-domain-main}-root"
-  acl    = "public-read"
 
   # Comment the following line if you are uncomfortable with Terraform destroying the bucket even if not empty
   force_destroy = true
-
-  logging {
-    target_bucket = aws_s3_bucket.website_logs.bucket
-    target_prefix = "${var.website-domain-main}/"
-  }
-
-  website {
-    index_document = "index.html"
-    error_document = "404.html"
-  }
 }
 
 ## CloudFront
